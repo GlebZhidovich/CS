@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      #test {
+        background: orange;
+        width: 250px;
+        height: 250px;
+        border-radius: 10px;
+        animation: moveToLeft 5s linear infinite;
+        animation-delay: 1000ms;
+      }
+
+      @keyframes moveToLeft {
+        0% {
+          transform: translateX(0px);
+          background: linear-gradient(
+            to right,
+            #ff8177 0%,
+            #ff867a 0%,
+            #ff8c7f 21%,
+            #f99185 52%,
+            #cf556c 78%,
+            #b12a5b 100%
+          );
+        }
+        25% {
+          transform: translateX(400px);
+          background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+        }
+        50% {
+          transform: translateX(400px);
+          background: linear-gradient(to top, #30cfd0 0%, #330867 100%);
+        }
+
+        75% {
+          background: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+        }
+        100% {
+          transform: translateY(0px);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="test"></div>
+    <div id="list"></div>
+    <script defer src="./index.js"></script>
+  </body>
+</html>
