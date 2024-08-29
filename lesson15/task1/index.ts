@@ -48,8 +48,13 @@ class AsyncEvent {
   }
 }
 
+type EventType = {
+  data: unknown;
+  target: EventEmitter;
+};
+
 type EventStore = {
-  cb: Set<(e: unknown) => void>;
+  cb: Set<(e: EventType) => void>;
   async: AsyncEvent[];
 };
 
@@ -60,13 +65,15 @@ type EventsStore = {
 
 type KeyStore = keyof Required<EventsStore>;
 
-class EventEmitter {
-  events = new Map<string, EventsStore>();
-  keys: Array<KeyStore> = ["on", "once"];
+export class EventEmitter {
+  private events = new Map<string, EventsStore>();
+  private keys: Array<KeyStore> = ["on", "once"];
+
+  constructor(private parent?: EventEmitter) {}
 
   addEvent(key: KeyStore, name: string): AsyncGenerator<unknown, void, unknown>;
-  addEvent(key: KeyStore, name: string, cb: (e: unknown) => void): void;
-  addEvent(key: KeyStore, name: string, cb?: (e: unknown) => void) {
+  addEvent(key: KeyStore, name: string, cb: (e: EventType) => void): void;
+  addEvent(key: KeyStore, name: string, cb?: (e: EventType) => void) {
     const store: EventsStore = this.events.get(name) ?? {
       on: {
         cb: new Set(),
@@ -93,8 +100,8 @@ class EventEmitter {
   }
 
   once(name: string): AsyncGenerator<unknown, void, unknown>;
-  once(name: string, cb: (e: unknown) => void): void;
-  once(name: string, cb?: (e: unknown) => void) {
+  once(name: string, cb: (e: EventType) => void): void;
+  once(name: string, cb?: (e: EventType) => void) {
     const type = "once";
 
     if (cb) {
@@ -105,8 +112,8 @@ class EventEmitter {
   }
 
   on(name: string): AsyncGenerator<unknown, void, unknown>;
-  on(name: string, cb: (e: unknown) => void): void;
-  on(name: string, cb?: (e: unknown) => void) {
+  on(name: string, cb: (e: EventType) => void): void;
+  on(name: string, cb?: (e: EventType) => void) {
     const type = "on";
 
     if (cb) {
@@ -116,7 +123,7 @@ class EventEmitter {
     return this.addEvent(type, name);
   }
 
-  emit(name: string, value: unknown) {
+  add(name: string, eventData: EventType) {
     const store = this.events.get(name);
 
     if (!store) {
@@ -125,10 +132,10 @@ class EventEmitter {
 
     this.keys.forEach((key) => {
       store[key]?.cb.forEach((cb) => {
-        cb(value);
+        cb(eventData);
       });
       store[key]?.async.forEach((event) => {
-        event.add(value);
+        event.add(eventData);
       });
     });
 
@@ -137,6 +144,16 @@ class EventEmitter {
       event.stop();
     });
     store.once.async = [];
+  }
+
+  emit(name: string, data: unknown) {
+    const eventData: EventType = {
+      data,
+      target: this,
+    };
+
+    this.add(name, eventData);
+    this.parent?.add(name, eventData);
   }
 
   off(name: string) {
@@ -156,31 +173,31 @@ class EventEmitter {
   }
 }
 
-const ee = new EventEmitter();
+// const ee = new EventEmitter();
 
-ee.once("someEvent", (e) => {
-  console.log(e);
-});
+// ee.once("someEvent", (e) => {
+//   console.log(e);
+// });
 
-(async () => {
-  for await (const e of ee.on("myEvent")) {
-    console.log("myEvent", e);
-  }
-})();
+// (async () => {
+//   for await (const e of ee.on("myEvent")) {
+//     console.log("myEvent", e);
+//   }
+// })();
 
-(async () => {
-  for await (const e of ee.once("myEvent")) {
-    console.log("myEvent once", e);
-  }
-})();
+// (async () => {
+//   for await (const e of ee.once("myEvent")) {
+//     console.log("myEvent once", e);
+//   }
+// })();
 
-ee.emit("someEvent", 42);
-ee.emit("myEvent", 22);
-ee.emit("myEvent", 12);
-ee.emit("myEvent", 32);
-ee.emit("someEvent", 55);
+// ee.emit("someEvent", 42);
+// ee.emit("myEvent", 22);
+// ee.emit("myEvent", 12);
+// ee.emit("myEvent", 32);
+// ee.emit("someEvent", 55);
 
-ee.off("myEvent");
-ee.off("someEvent");
+// ee.off("myEvent");
+// ee.off("someEvent");
 
-ee.emit("myEvent", 112);
+// ee.emit("myEvent", 112);
