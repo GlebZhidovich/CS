@@ -51,6 +51,8 @@ class AsyncEvent {
 type EventType = {
   data: unknown;
   target: EventEmitter;
+  propagation: boolean;
+  stopPropagation: () => void;
 };
 
 type EventStore = {
@@ -150,10 +152,17 @@ export class EventEmitter {
     const eventData: EventType = {
       data,
       target: this,
+      propagation: true,
+      stopPropagation() {
+        this.propagation = false;
+      },
     };
 
     this.add(name, eventData);
-    this.parent?.add(name, eventData);
+
+    if (eventData.propagation) {
+      this.parent?.add(name, eventData);
+    }
   }
 
   off(name: string) {

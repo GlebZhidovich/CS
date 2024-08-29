@@ -1,2 +1,2 @@
 import "./style.css";
-import "../task2";
+import "../task3";
