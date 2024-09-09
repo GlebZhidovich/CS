@@ -1,7 +1,7 @@
 // Описать базовый интерфейс и реализацию для источника данных.
 
 interface DataProvider<T> {
-  get(): Promise<T>;
+  get(query: Record<string, string | number>): Promise<T>;
   create(data: T): Promise<void>;
   put(data: T): Promise<void>;
   delete(id: string): Promise<void>;
@@ -33,7 +33,7 @@ interface ProviderParams {
   createMethod: string;
 }
 
-abstract class Provider<T> implements DataProvider<T>, ProviderParams {
+export abstract class Provider<T> implements DataProvider<T>, ProviderParams {
   static requestInit = {};
 
   get requestInit(): RequestInit {
@@ -45,8 +45,9 @@ abstract class Provider<T> implements DataProvider<T>, ProviderParams {
   getMethod = "GET";
   createMethod = "POST";
 
-  async get(): Promise<T> {
-    return this.request(this.getURL, { method: this.getMethod });
+  async get(query: Record<string, string>): Promise<T> {
+    const queryStr = new URLSearchParams(query);
+    return this.request(this.getURL + queryStr, { method: this.getMethod });
   }
   async create(data: T): Promise<void> {
     this.request(this.getURL, {
@@ -68,7 +69,7 @@ abstract class Provider<T> implements DataProvider<T>, ProviderParams {
   }
 }
 
-class UserProvider<T> extends Provider<T> {
+export class UserProvider<T> extends Provider<T> {
   static requestInit = {
     ...Provider.requestInit,
     headers: {
@@ -84,4 +85,4 @@ class UserProvider<T> extends Provider<T> {
   addMethod = "PUT";
 }
 
-new UserProvider().get().then(console.log);
+new UserProvider().get({ id: "42" }).then(console.log);
